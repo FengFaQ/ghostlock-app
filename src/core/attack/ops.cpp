@@ -253,9 +253,10 @@ namespace ghostlock::attack {
              * back a bridge library. Mirrors KsudLibrary in the app. */
             "find_ksud() {\n"
             /* Android 11+ nests the package dir one level deeper
-             * (/data/app/~~<rand>/<pkg>-<rand>), Android 10 does not, so search
-             * a few levels for the directory name instead of assuming a depth. */
-            "  d=$(find /data/app -maxdepth 3 -type d -name \"$1\" 2>/dev/null | head -1)\n"
+             * (/data/app/~~<rand>/<pkg>-<rand>), Android 10 does not, so match
+             * the directory name wherever it sits. No -maxdepth: the tree is
+             * shallow and the flag is not worth depending on. */
+            "  d=$(find /data/app -type d -name \"$1\" 2>/dev/null | head -1)\n"
             "  [ -n \"$d\" ] || return 0\n"
             "  if [ -x \"$d/lib/arm64/libksud.so\" ]; then echo \"$d/lib/arm64/libksud.so\"; return 0; fi\n"
             "  best=''; bestsz=0\n"
@@ -263,7 +264,8 @@ namespace ghostlock::attack {
             "    [ -f \"$f\" ] || continue\n"
             "    sz=$(wc -c <\"$f\" 2>/dev/null)\n"
             "    [ -n \"$sz\" ] && [ \"$sz\" -ge 1000000 ] || continue\n"
-            "    [ \"$(od -An -tx1 -N4 \"$f\" 2>/dev/null | tr -d ' \\n')\" = '7f454c46' ] || continue\n"
+            /* \x7fELF as hex; [:space:] avoids depending on \n handling in tr. */
+            "    [ \"$(od -An -tx1 -N4 \"$f\" 2>/dev/null | tr -d '[:space:]')\" = '7f454c46' ] || continue\n"
             "    if [ \"$sz\" -gt \"$bestsz\" ]; then bestsz=$sz; best=$f; fi\n"
             "  done\n"
             "  [ -n \"$best\" ] && echo \"$best\"\n"
