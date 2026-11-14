@@ -243,7 +243,6 @@ namespace ghostlock::attack {
             "echo \"[*] root script start uid=$(id -u) euid=$(id -u)\" >\"$LOG\"\n"
             "chmod 644 \"$LOG\" 2>/dev/null\n"
             "echo \"[*] seccomp=$(grep Seccomp /proc/self/status 2>/dev/null | tr '\\n' ' ')\" >>\"$LOG\"\n"
-            "if [ ! -x \"$KSUD\" ]; then\n"
             /* Managers package ksud as libksud.so, except SukiSU Ultra: its
              * release CI rewrites the literal to a random lib*.so name, so the
              * canonical path alone misses it. A packaged ksud is the only
@@ -253,7 +252,10 @@ namespace ghostlock::attack {
              * a manager that ships no ksud at all abstain instead of handing
              * back a bridge library. Mirrors KsudLibrary in the app. */
             "find_ksud() {\n"
-            "  d=$(find /data/app -maxdepth 1 -name \"$1\" 2>/dev/null | head -1)\n"
+            /* Android 11+ nests the package dir one level deeper
+             * (/data/app/~~<rand>/<pkg>-<rand>), Android 10 does not, so search
+             * a few levels for the directory name instead of assuming a depth. */
+            "  d=$(find /data/app -maxdepth 3 -type d -name \"$1\" 2>/dev/null | head -1)\n"
             "  [ -n \"$d\" ] || return 0\n"
             "  if [ -x \"$d/lib/arm64/libksud.so\" ]; then echo \"$d/lib/arm64/libksud.so\"; return 0; fi\n"
             "  best=''; bestsz=0\n"
