@@ -3,6 +3,7 @@ package com.ghostlock.app.shizuku
 import android.content.Context
 import android.os.Process
 import androidx.annotation.Keep
+import com.ghostlock.app.data.KsudLibrary
 import com.ghostlock.app.data.ManagerScanner
 import com.ghostlock.app.data.NativeProfileDocument
 import java.io.File
@@ -74,13 +75,15 @@ class GhostlockUserService(private val context: Context) : IGhostlockUserService
                 callback.onLog("<s> kernel: $release")
                 // Same resolution as the direct path: chosen manager first,
                 // then the built-ins. Native gets the path via GHOSTLOCK_KSUD.
+                // The ksud file name varies between managers, so the lookup is
+                // structural (KsudLibrary), not a `libksud.so` match.
                 val pm = context.packageManager
                 val ksudPath = ManagerScanner.resolvePackages(managerPackage)
                     .asSequence()
                     .map { pkg ->
                         runCatching {
-                            File(pm.getApplicationInfo(pkg, 0).nativeLibraryDir, "libksud.so")
-                        }.getOrNull()?.takeIf { it.isFile }
+                            KsudLibrary.find(File(pm.getApplicationInfo(pkg, 0).nativeLibraryDir))
+                        }.getOrNull()
                     }
                     .firstOrNull { it != null }
                 ksudPath?.let { callback.onLog("<s> ksud resolved: ${it.absolutePath}") }

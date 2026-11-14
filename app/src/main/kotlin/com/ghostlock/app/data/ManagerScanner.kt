@@ -38,11 +38,12 @@ object ManagerScanner {
             .filter { (pi, _) -> pi.packageName != selfPackage }
             .filter { (_, ai) -> (ai.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
             .map { (pi, ai) ->
-                val dir = ai.nativeLibraryDir
                 Candidate(
                     packageName = pi.packageName,
                     label = ai.loadLabel(pm).toString(),
-                    hasKsud = dir != null && File(dir, "libksud.so").isFile,
+                    /* Not a name check: SukiSU Ultra renames the packaged ksud
+                     * on every release build. See KsudLibrary. */
+                    hasKsud = KsudLibrary.find(ai.nativeLibraryDir?.let(::File)) != null,
                     builtin = pi.packageName in BUILTIN,
                 )
             }

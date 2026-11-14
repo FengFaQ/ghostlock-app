@@ -14,7 +14,7 @@ Support requires an exact `uname -r` match. Check the [supported devices](docs/k
 
 If Shizuku is enabled, start it with ADB before running GhostLock. Tap GhostLock's status card to grant access.
 
-Any root manager that ships `libksud.so` provides `ksud` for module loading. The built-in list (KernelSU, SukiSU Ultra, ReSukiSU, BakaSU, KowSU) is auto-detected, and other managers can be picked in **Settings → Root manager**. Without `ksud`, W1/W2 still grant uid 0 but no module is loaded.
+Any root manager that ships a `ksud` executable in its native libraries provides module loading. The built-in list (KernelSU, SukiSU Ultra, ReSukiSU, BakaSU, KowSU) is auto-detected, and other managers can be picked in **Settings → Root manager**. The lookup does not rely on the file name: KernelSU-family managers package it as `libksud.so`, but SukiSU Ultra renames it on every release build, so GhostLock matches the packaged `ksud` by shape instead (a multi-megabyte ELF executable). Without `ksud`, W1/W2 still grant uid 0 but no module is loaded.
 
 ## Add a kernel profile
 

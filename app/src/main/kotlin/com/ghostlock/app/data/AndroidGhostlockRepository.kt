@@ -1032,16 +1032,21 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
 
     private fun firstValidProperty(vararg keys: String): String? = keys.asSequence().firstNotNullOfOrNull { validDeviceName(systemProperty(it)) }
 
-    /** First ksud binary in resolvePackages order, or null. */
+    /**
+     * First ksud binary in resolvePackages order, or null. The file name is not
+     * reliable (SukiSU Ultra renames it per release), so detection is
+     * structural — see [KsudLibrary].
+     */
     private fun resolveKsudPath(onLog: (String) -> Unit): File? {
         val packages = ManagerScanner.resolvePackages(selectedManagerPackage())
         for (packageName in packages) {
-            val source = runCatching {
-                File(appContext.packageManager.getApplicationInfo(packageName, 0).nativeLibraryDir, "libksud.so")
-            }.getOrNull()?.takeIf { it.isFile } ?: continue
+            val dir = runCatching {
+                appContext.packageManager.getApplicationInfo(packageName, 0).nativeLibraryDir
+            }.getOrNull() ?: continue
+            val source = KsudLibrary.find(dir.let(::File)) ?: continue
             return source
         }
-        onLog("<k> no manager app with libksud.so found")
+        onLog("<k> no manager app with a ksud executable found")
         return null
     }
 
